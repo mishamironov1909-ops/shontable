@@ -1,0 +1,1884 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOU SIMULATOR EUROVISION</title>
+<style>
+:root {
+  --bg: #050a14;
+  --bg2: #0a1228;
+  --panel: #0d1a33;
+  --border: #1a2d55;
+  --accent: #3b82f6;
+  --accent2: #8b5cf6;
+  --gold: #f5c542;
+  --text: #e8eef8;
+  --muted: #8a9bb8;
+  --leader: #f5c542;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --radius: 8px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --flag-size: 28px;
+  --row-h: 42px;
+  --anim-speed: 1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+body.theme-midnight { --bg:#050a14; --bg2:#0a1228; --panel:#0d1a33; --border:#1a2d55; --accent:#3b82f6; --accent2:#8b5cf6; }
+body.theme-violet { --bg:#0c0618; --bg2:#160b2e; --panel:#1a0f35; --border:#3b1f6b; --accent:#a855f7; --accent2:#ec4899; }
+body.theme-ocean { --bg:#021016; --bg2:#041c2a; --panel:#0a2438; --border:#0e3a55; --accent:#06b6d4; --accent2:#3b82f6; }
+body.theme-gold { --bg:#0a0906; --bg2:#15120a; --panel:#1c180e; --border:#3d3420; --accent:#f5c542; --accent2:#eab308; }
+body.theme-aurora { --bg:#040810; --bg2:#0a1428; --panel:#0e1c38; --border:#1e3a5f; --accent:#22d3ee; --accent2:#a78bfa; }
+body.theme-minimal { --bg:#0a0a0a; --bg2:#111; --panel:#161616; --border:#2a2a2a; --accent:#e5e5e5; --accent2:#a3a3a3; }
+
+/* NAV */
+#nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 100;
+}
+.nav-brand {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  margin-right: 12px;
+  white-space: nowrap;
+}
+.nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-btn.active { color: var(--text); background: var(--panel); border-color: var(--border); }
+.nav-spacer { flex: 1; }
+.nav-status {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 8px;
+}
+.rec-indicator {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: none;
+  animation: pulse 1s infinite;
+  margin-right: 6px;
+}
+.rec-indicator.on { display: inline-block; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* SCREENS */
+.screen {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+/* SCOREBOARD */
+#scoreboard-screen {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+}
+.sb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+}
+.sb-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.sb-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.sb-progress {
+  font-size: 12px;
+  color: var(--muted);
+}
+.sb-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+}
+table.scoreboard {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+table.scoreboard thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg2);
+  z-index: 10;
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+table.scoreboard tbody tr {
+  height: var(--row-h);
+  transition: background 0.3s, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+table.scoreboard tbody tr:hover { background: rgba(255,255,255,0.03); }
+table.scoreboard tbody tr.leader {
+  background: linear-gradient(90deg, rgba(245,197,66,0.12), transparent);
+}
+table.scoreboard tbody tr.has-points { opacity: 1; }
+table.scoreboard tbody tr.no-points { opacity: 0.55; }
+table.scoreboard td {
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+.rank-cell {
+  width: 48px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--muted);
+  text-align: center;
+}
+tr.leader .rank-cell { color: var(--gold); }
+.flag-cell { width: 40px; }
+.flag-cell img {
+  width: var(--flag-size);
+  height: calc(var(--flag-size) * 0.67);
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  display: block;
+}
+.country-cell {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+.points-cell {
+  width: 70px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--muted);
+}
+.total-cell {
+  width: 90px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+tr.leader .total-cell { color: var(--gold); }
+
+/* VOTING OVERLAY */
+#vote-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#vote-overlay.show { display: flex; }
+.vote-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(59,130,246,0.15), transparent 60%),
+              radial-gradient(ellipse at 70% 70%, rgba(139,92,246,0.1), transparent 50%);
+  pointer-events: none;
+}
+.vote-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  width: 90%;
+}
+.vote-label {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.vote-country-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.vote-flag {
+  width: 96px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.vote-country-name {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.vote-points-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 24px 0;
+}
+.vote-point-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  min-width: 140px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.vote-point-item.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+.vote-point-item.twelve {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(245,197,66,0.15), transparent);
+  box-shadow: 0 0 24px rgba(245,197,66,0.25);
+}
+.vp-pts {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.vp-name {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 4px;
+}
+.vp-flag {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 1px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.vote-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.btn:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.gold { background: var(--gold); border-color: var(--gold); color: #111; }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* PANELS (participants, jury entry, public, settings, final) */
+.panel-screen {
+  padding: 16px 20px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.card h3 {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.search-input, .text-input, select.select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+.search-input:focus, .text-input:focus, select.select:focus { border-color: var(--accent); }
+.country-list {
+  max-height: 360px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+.country-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.country-item:hover { background: rgba(255,255,255,0.04); }
+.country-item.selected { background: rgba(59,130,246,0.15); }
+.country-item img {
+  width: 24px; height: 16px;
+  object-fit: cover;
+  border-radius: 1px;
+}
+.country-item input[type=checkbox] { accent-color: var(--accent); }
+.part-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* JURY ENTRY */
+.jury-entry-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+}
+.points-assign {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.pt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+.pt-val {
+  width: 36px;
+  font-weight: 700;
+  color: var(--gold);
+  text-align: center;
+}
+.pt-row select { flex: 1; }
+
+/* PUBLIC ENTRY */
+.public-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.public-table th, .public-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.public-table input[type=number] {
+  width: 80px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 3px;
+  text-align: right;
+}
+
+/* SETTINGS */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.setting-row label {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.theme-swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.theme-swatch {
+  width: 28px; height: 28px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.theme-swatch.active { border-color: var(--gold); }
+
+/* FINAL / WINNER */
+#winner-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 300;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#winner-overlay.show { display: flex; }
+.winner-flag {
+  width: 180px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 0 60px rgba(245,197,66,0.4);
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.8s cubic-bezier(0.22,1,0.36,1);
+}
+.winner-flag.show { opacity: 1; transform: scale(1); }
+.winner-label {
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0;
+  transition: opacity 0.6s 0.3s;
+}
+.winner-label.show { opacity: 1; }
+.winner-name {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s 0.5s;
+}
+.winner-name.show { opacity: 1; transform: translateY(0); }
+.winner-pts {
+  font-size: 28px;
+  color: var(--gold);
+  opacity: 0;
+  transition: opacity 0.6s 0.7s;
+}
+.winner-pts.show { opacity: 1; }
+
+/* CONTROLS BAR */
+.controls-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.controls-bar .sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* MODAL */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 480px;
+  width: 90%;
+}
+.modal h2 { font-size: 16px; margin-bottom: 12px; color: var(--gold); }
+.modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* REDUCED MOTION */
+body.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .panel-grid, .jury-entry-grid { grid-template-columns: 1fr; }
+  .vote-country-name { font-size: 28px; }
+  .winner-name { font-size: 36px; }
+}
+</style>
+</head>
+<body class="theme-midnight">
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-brand">YOU SIMULATOR EUROVISION</div>
+  <button class="nav-btn active" data-screen="scoreboard">SCOREBOARD</button>
+  <button class="nav-btn" data-screen="jury">JURY VOTING</button>
+  <button class="nav-btn" data-screen="public">PUBLIC VOTING</button>
+  <button class="nav-btn" data-screen="participants">PARTICIPANTS</button>
+  <button class="nav-btn" data-screen="final">FINAL RESULTS</button>
+  <button class="nav-btn" data-screen="settings">SETTINGS</button>
+  <div class="nav-spacer"></div>
+  <span class="rec-indicator" id="recDot"></span>
+  <span class="nav-status" id="navStatus"></span>
+</nav>
+
+<!-- SCOREBOARD -->
+<section id="scoreboard-screen" class="screen active">
+  <div class="sb-header">
+    <div>
+      <div class="sb-title" id="compTitle">EUROVISION SIMULATOR</div>
+      <div class="sb-subtitle" id="compSubtitle">Grand Final</div>
+    </div>
+    <div class="sb-progress" id="sbProgress">Ready</div>
+  </div>
+  <div class="sb-table-wrap">
+    <table class="scoreboard">
+      <thead>
+        <tr>
+          <th style="width:48px">Rank</th>
+          <th style="width:40px"></th>
+          <th>Country</th>
+          <th style="width:70px;text-align:right">Jury</th>
+          <th style="width:70px;text-align:right">Public</th>
+          <th style="width:90px;text-align:right">Total</th>
+        </tr>
+      </thead>
+      <tbody id="sbBody"></tbody>
+    </table>
+  </div>
+  <div class="controls-bar">
+    <button class="btn" id="btnStartJury">Start Jury Voting</button>
+    <button class="btn" id="btnStartPublic">Start Public Voting</button>
+    <div class="sep"></div>
+    <button class="btn" id="btnRevealWinner">Reveal Winner</button>
+    <div class="sep"></div>
+    <button class="btn" id="btnRecStart">Record</button>
+    <button class="btn" id="btnRecStop" disabled>Stop</button>
+    <span id="recTime" style="font-size:12px;color:var(--muted)"></span>
+  </div>
+</section>
+
+<!-- PARTICIPANTS -->
+<section id="participants-screen" class="screen panel-screen">
+  <div class="panel-title">PARTICIPANTS</div>
+  <div class="panel-grid">
+    <div class="card">
+      <h3>Available Countries</h3>
+      <input type="text" class="search-input" id="countrySearch" placeholder="Search countries...">
+      <div class="country-list" id="availableList"></div>
+      <div class="part-actions">
+        <button class="btn primary" id="btnAddSelected">Add Selected</button>
+        <button class="btn" id="btnAddDefaults">Load Eurovision Defaults</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Participating Countries (<span id="partCount">0</span>)</h3>
+      <div class="country-list" id="participantList"></div>
+      <div class="part-actions">
+        <button class="btn" id="btnRemoveSelected">Remove Selected</button>
+        <button class="btn" id="btnMoveUp">Move Up</button>
+        <button class="btn" id="btnMoveDown">Move Down</button>
+        <button class="btn danger" id="btnClearParts">Clear All</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JURY VOTING -->
+<section id="jury-screen" class="screen panel-screen">
+  <div class="panel-title">JURY VOTING</div>
+  <div class="jury-entry-grid">
+    <div class="card">
+      <h3>Voting Country</h3>
+      <select class="select" id="juryVoterSelect"></select>
+      <div style="margin-top:12px">
+        <button class="btn primary" id="btnSaveJury" style="width:100%;margin-bottom:6px">Save Vote</button>
+        <button class="btn" id="btnClearJury" style="width:100%;margin-bottom:6px">Clear</button>
+        <button class="btn gold" id="btnPresentJury" style="width:100%;margin-bottom:6px">Present Vote</button>
+        <button class="btn" id="btnAutoJury" style="width:100%;margin-bottom:6px">Auto-Generate Vote</button>
+        <button class="btn" id="btnPlayAllJury" style="width:100%">Play All Remaining</button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)" id="juryStatus"></div>
+    </div>
+    <div class="card">
+      <h3>Point Allocations (1–8, 10, 12)</h3>
+      <div class="points-assign" id="juryPointsAssign"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PUBLIC VOTING -->
+<section id="public-screen" class="screen panel-screen">
+  <div class="panel-title">PUBLIC VOTING</div>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Televote Points Distribution</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Enter public points for each country. Points are free-form (not restricted to 1–8,10,12).</p>
+    <div style="overflow-x:auto">
+      <table class="public-table">
+        <thead>
+          <tr><th>Country</th><th>Flag</th><th>Public Points</th></tr>
+        </thead>
+        <tbody id="publicBody"></tbody>
+      </table>
+    </div>
+    <div class="part-actions" style="margin-top:12px">
+      <button class="btn primary" id="btnSavePublic">Save Public Votes</button>
+      <button class="btn gold" id="btnPresentPublic">Present Public Results</button>
+      <button class="btn" id="btnClearPublic">Clear</button>
+      <button class="btn" id="btnAutoPublic">Auto-Distribute</button>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section id="final-screen" class="screen panel-screen">
+  <div class="panel-title">FINAL RESULTS</div>
+  <div class="card">
+    <table class="scoreboard" style="font-size:14px">
+      <thead>
+        <tr>
+          <th style="width:48px">Rank</th>
+          <th style="width:40px"></th>
+          <th>Country</th>
+          <th style="width:70px;text-align:right">Jury</th>
+          <th style="width:70px;text-align:right">Public</th>
+          <th style="width:90px;text-align:right">Total</th>
+        </tr>
+      </thead>
+      <tbody id="finalBody"></tbody>
+    </table>
+  </div>
+  <div class="part-actions" style="margin-top:12px">
+    <button class="btn gold" id="btnWinnerAnim">Winner Announcement</button>
+    <button class="btn" id="btnExportCSV">Export CSV</button>
+    <button class="btn" id="btnExportJSON">Export JSON</button>
+    <button class="btn" id="btnImportJSON">Import JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings-screen" class="screen panel-screen">
+  <div class="panel-title">SETTINGS</div>
+  <div class="settings-grid">
+    <div class="card">
+      <div class="setting-row">
+        <label>Competition Title</label>
+        <input type="text" class="text-input" id="setTitle" value="EUROVISION SIMULATOR">
+      </div>
+      <div class="setting-row" style="margin-top:10px">
+        <label>Subtitle</label>
+        <input type="text" class="text-input" id="setSubtitle" value="Grand Final">
+      </div>
+    </div>
+    <div class="card">
+      <div class="setting-row">
+        <label>Theme</label>
+        <div class="theme-swatches" id="themeSwatches">
+          <div class="theme-swatch active" data-theme="midnight" style="background:#0a1228" title="Midnight Blue"></div>
+          <div class="theme-swatch" data-theme="violet" style="background:#160b2e" title="Electric Violet"></div>
+          <div class="theme-swatch" data-theme="ocean" style="background:#041c2a" title="Deep Ocean"></div>
+          <div class="theme-swatch" data-theme="gold" style="background:#15120a" title="Black and Gold"></div>
+          <div class="theme-swatch" data-theme="aurora" style="background:#0a1428" title="Aurora"></div>
+          <div class="theme-swatch" data-theme="minimal" style="background:#111" title="Minimal Dark"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="setting-row">
+        <label>Animation Speed</label>
+        <select class="select" id="setAnimSpeed">
+          <option value="0.5">Slow</option>
+          <option value="1" selected>Normal</option>
+          <option value="1.5">Fast</option>
+          <option value="2">Very Fast</option>
+        </select>
+      </div>
+      <div class="setting-row" style="margin-top:10px">
+        <label>Flag Size</label>
+        <select class="select" id="setFlagSize">
+          <option value="22">Small</option>
+          <option value="28" selected>Medium</option>
+          <option value="36">Large</option>
+        </select>
+      </div>
+      <div class="setting-row" style="margin-top:10px">
+        <label><input type="checkbox" id="setReducedMotion"> Reduced Motion</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="setting-row">
+        <label>Data</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn" id="btnSaveComp">Save Competition</button>
+          <button class="btn" id="btnNewComp">New Competition</button>
+          <button class="btn danger" id="btnResetComp">Reset All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VOTE OVERLAY -->
+<div id="vote-overlay">
+  <div class="vote-bg"></div>
+  <div class="vote-content">
+    <div class="vote-label" id="voteLabel">JURY VOTING</div>
+    <div class="vote-country-row">
+      <img class="vote-flag" id="voteFlag" src="" alt="">
+      <div class="vote-country-name" id="voteCountryName"></div>
+    </div>
+    <div class="vote-points-list" id="votePointsList"></div>
+  </div>
+  <div class="vote-controls">
+    <button class="btn" id="btnVotePrev">Previous</button>
+    <button class="btn" id="btnVotePause">Pause</button>
+    <button class="btn" id="btnVoteNext">Next</button>
+    <button class="btn" id="btnVoteReplay">Replay</button>
+    <button class="btn" id="btnVoteClose">Close</button>
+  </div>
+</div>
+
+<!-- WINNER OVERLAY -->
+<div id="winner-overlay">
+  <div class="vote-bg"></div>
+  <img class="winner-flag" id="winnerFlag" src="" alt="">
+  <div class="winner-label" id="winnerLabel">WINNER</div>
+  <div class="winner-name" id="winnerName"></div>
+  <div class="winner-pts" id="winnerPts"></div>
+  <div style="margin-top:32px">
+    <button class="btn" id="btnWinnerClose">Close</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Confirm</h2>
+    <p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   YOU SIMULATOR EUROVISION — Complete Single-File Application
+   ============================================================ */
+
+const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
+
+const COUNTRIES = [
+  {code:'al',name:'Albania'},{code:'ad',name:'Andorra'},{code:'am',name:'Armenia'},
+  {code:'au',name:'Australia'},{code:'at',name:'Austria'},{code:'az',name:'Azerbaijan'},
+  {code:'by',name:'Belarus'},{code:'be',name:'Belgium'},{code:'ba',name:'Bosnia and Herzegovina'},
+  {code:'bg',name:'Bulgaria'},{code:'hr',name:'Croatia'},{code:'cy',name:'Cyprus'},
+  {code:'cz',name:'Czechia'},{code:'dk',name:'Denmark'},{code:'ee',name:'Estonia'},
+  {code:'fi',name:'Finland'},{code:'fr',name:'France'},{code:'ge',name:'Georgia'},
+  {code:'de',name:'Germany'},{code:'gr',name:'Greece'},{code:'hu',name:'Hungary'},
+  {code:'is',name:'Iceland'},{code:'ie',name:'Ireland'},{code:'il',name:'Israel'},
+  {code:'it',name:'Italy'},{code:'lv',name:'Latvia'},{code:'lt',name:'Lithuania'},
+  {code:'lu',name:'Luxembourg'},{code:'mt',name:'Malta'},{code:'md',name:'Moldova'},
+  {code:'mc',name:'Monaco'},{code:'me',name:'Montenegro'},{code:'ma',name:'Morocco'},
+  {code:'nl',name:'Netherlands'},{code:'mk',name:'North Macedonia'},{code:'no',name:'Norway'},
+  {code:'pl',name:'Poland'},{code:'pt',name:'Portugal'},{code:'ro',name:'Romania'},
+  {code:'ru',name:'Russia'},{code:'sm',name:'San Marino'},{code:'rs',name:'Serbia'},
+  {code:'sk',name:'Slovakia'},{code:'si',name:'Slovenia'},{code:'es',name:'Spain'},
+  {code:'se',name:'Sweden'},{code:'ch',name:'Switzerland'},{code:'tr',name:'Turkey'},
+  {code:'ua',name:'Ukraine'},{code:'gb',name:'United Kingdom'},{code:'xk',name:'Kosovo'},
+  {code:'us',name:'United States'},{code:'ca',name:'Canada'},{code:'br',name:'Brazil'},
+  {code:'jp',name:'Japan'},{code:'kr',name:'South Korea'},{code:'cn',name:'China'},
+  {code:'in',name:'India'},{code:'mx',name:'Mexico'},{code:'ar',name:'Argentina'},
+  {code:'za',name:'South Africa'},{code:'eg',name:'Egypt'},{code:'nz',name:'New Zealand'},
+  {code:'sg',name:'Singapore'},{code:'th',name:'Thailand'},{code:'ph',name:'Philippines'},
+  {code:'id',name:'Indonesia'},{code:'my',name:'Malaysia'},{code:'vn',name:'Vietnam'},
+  {code:'cl',name:'Chile'},{code:'co',name:'Colombia'},{code:'pe',name:'Peru'},
+  {code:'ae',name:'United Arab Emirates'},{code:'sa',name:'Saudi Arabia'},
+  {code:'qa',name:'Qatar'},{code:'kw',name:'Kuwait'},{code:'bh',name:'Bahrain'},
+  {code:'om',name:'Oman'},{code:'jo',name:'Jordan'},{code:'lb',name:'Lebanon'},
+  {code:'tn',name:'Tunisia'},{code:'dz',name:'Algeria'},{code:'ma',name:'Morocco'},
+  {code:'ng',name:'Nigeria'},{code:'ke',name:'Kenya'},{code:'gh',name:'Ghana'},
+  {code:'et',name:'Ethiopia'},{code:'tz',name:'Tanzania'},{code:'ug',name:'Uganda'},
+  {code:'zw',name:'Zimbabwe'},{code:'bw',name:'Botswana'},{code:'na',name:'Namibia'},
+  {code:'mz',name:'Mozambique'},{code:'ao',name:'Angola'},{code:'cm',name:'Cameroon'},
+  {code:'ci',name:'Ivory Coast'},{code:'sn',name:'Senegal'},{code:'ml',name:'Mali'},
+  {code:'bf',name:'Burkina Faso'},{code:'ne',name:'Niger'},{code:'td',name:'Chad'},
+  {code:'sd',name:'Sudan'},{code:'ly',name:'Libya'},{code:'mr',name:'Mauritania'},
+  {code:'gm',name:'Gambia'},{code:'gw',name:'Guinea-Bissau'},{code:'gn',name:'Guinea'},
+  {code:'sl',name:'Sierra Leone'},{code:'lr',name:'Liberia'},{code:'tg',name:'Togo'},
+  {code:'bj',name:'Benin'},{code:'ga',name:'Gabon'},{code:'cg',name:'Congo'},
+  {code:'cd',name:'DR Congo'},{code:'rw',name:'Rwanda'},{code:'bi',name:'Burundi'},
+  {code:'ss',name:'South Sudan'},{code:'er',name:'Eritrea'},{code:'dj',name:'Djibouti'},
+  {code:'so',name:'Somalia'},{code:'km',name:'Comoros'},{code:'sc',name:'Seychelles'},
+  {code:'mu',name:'Mauritius'},{code:'mg',name:'Madagascar'},{code:'mw',name:'Malawi'},
+  {code:'zm',name:'Zambia'},{code:'ls',name:'Lesotho'},{code:'sz',name:'Eswatini'},
+  {code:'cv',name:'Cape Verde'},{code:'st',name:'Sao Tome and Principe'},
+  {code:'gq',name:'Equatorial Guinea'},{code:'cf',name:'Central African Republic'},
+  {code:'af',name:'Afghanistan'},{code:'pk',name:'Pakistan'},{code:'bd',name:'Bangladesh'},
+  {code:'lk',name:'Sri Lanka'},{code:'np',name:'Nepal'},{code:'bt',name:'Bhutan'},
+  {code:'mv',name:'Maldives'},{code:'mm',name:'Myanmar'},{code:'la',name:'Laos'},
+  {code:'kh',name:'Cambodia'},{code:'mn',name:'Mongolia'},{code:'kz',name:'Kazakhstan'},
+  {code:'uz',name:'Uzbekistan'},{code:'tm',name:'Turkmenistan'},{code:'tj',name:'Tajikistan'},
+  {code:'kg',name:'Kyrgyzstan'},{code:'ir',name:'Iran'},{code:'iq',name:'Iraq'},
+  {code:'sy',name:'Syria'},{code:'ye',name:'Yemen'},{code:'ps',name:'Palestine'},
+  {code:'tw',name:'Taiwan'},{code:'hk',name:'Hong Kong'},{code:'mo',name:'Macau'},
+  {code:'kp',name:'North Korea'},{code:'bn',name:'Brunei'},{code:'tl',name:'Timor-Leste'},
+  {code:'pg',name:'Papua New Guinea'},{code:'fj',name:'Fiji'},{code:'sb',name:'Solomon Islands'},
+  {code:'vu',name:'Vanuatu'},{code:'nc',name:'New Caledonia'},{code:'pf',name:'French Polynesia'},
+  {code:'ws',name:'Samoa'},{code:'to',name:'Tonga'},{code:'ki',name:'Kiribati'},
+  {code:'tv',name:'Tuvalu'},{code:'nr',name:'Nauru'},{code:'pw',name:'Palau'},
+  {code:'fm',name:'Micronesia'},{code:'mh',name:'Marshall Islands'},
+  {code:'cu',name:'Cuba'},{code:'jm',name:'Jamaica'},{code:'ht',name:'Haiti'},
+  {code:'do',name:'Dominican Republic'},{code:'tt',name:'Trinidad and Tobago'},
+  {code:'bb',name:'Barbados'},{code:'bs',name:'Bahamas'},{code:'bz',name:'Belize'},
+  {code:'gt',name:'Guatemala'},{code:'hn',name:'Honduras'},{code:'sv',name:'El Salvador'},
+  {code:'ni',name:'Nicaragua'},{code:'cr',name:'Costa Rica'},{code:'pa',name:'Panama'},
+  {code:'ve',name:'Venezuela'},{code:'gy',name:'Guyana'},{code:'sr',name:'Suriname'},
+  {code:'uy',name:'Uruguay'},{code:'py',name:'Paraguay'},{code:'bo',name:'Bolivia'},
+  {code:'ec',name:'Ecuador'},{code:'fk',name:'Falkland Islands'},
+  {code:'gl',name:'Greenland'},{code:'fo',name:'Faroe Islands'},{code:'is',name:'Iceland'},
+  {code:'li',name:'Liechtenstein'},{code:'va',name:'Vatican City'},
+  {code:'gi',name:'Gibraltar'},{code:'je',name:'Jersey'},{code:'gg',name:'Guernsey'},
+  {code:'im',name:'Isle of Man'},{code:'ax',name:'Aland Islands'},
+  {code:'xk',name:'Kosovo'}
+];
+
+// Deduplicate by code
+const countryMap = {};
+COUNTRIES.forEach(c => { if (!countryMap[c.code]) countryMap[c.code] = c; });
+const ALL_COUNTRIES = Object.values(countryMap).sort((a,b) => a.name.localeCompare(b.name));
+
+const DEFAULT_PARTICIPANTS = [
+  'se','fr','it','ua','no','fi','es','de','gb','ch','nl','be','at','pt','il',
+  'gr','cy','hr','si','rs','al','am','az','ge','ee','lv','lt','pl','cz','mt',
+  'sm','ie','is','dk','au','lu','md'
+];
+
+function flagUrl(code) {
+  return `https://flagcdn.com/w80/${code}.png`;
+}
+
+/* ---------- STATE ---------- */
+let state = {
+  title: 'EUROVISION SIMULATOR',
+  subtitle: 'Grand Final',
+  participants: [],
+  juryVotes: {},      // voterCode -> { recipientCode: points }
+  publicVotes: {},    // countryCode -> points
+  votingOrder: [],
+  currentVoterIdx: 0,
+  juryPresented: {},  // voterCode -> true
+  publicPresented: false,
+  theme: 'midnight',
+  animSpeed: 1,
+  flagSize: 28,
+  reducedMotion: false
+};
+
+let mediaRecorder = null;
+let recordedChunks = [];
+let recStartTime = 0;
+let recTimer = null;
+let isRecording = false;
+let votePlaying = false;
+let votePaused = false;
+let voteQueue = [];
+let voteQueueIdx = 0;
+
+/* ---------- INIT ---------- */
+function init() {
+  loadState();
+  if (state.participants.length === 0) {
+    state.participants = DEFAULT_PARTICIPANTS.filter(c => countryMap[c]);
+    state.votingOrder = [...state.participants];
+  }
+  applyTheme(state.theme);
+  applySettings();
+  bindNav();
+  bindControls();
+  renderScoreboard();
+  renderParticipants();
+  renderJuryPanel();
+  renderPublicPanel();
+  updateNavStatus();
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('yse_state', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('yse_state');
+    if (s) {
+      const parsed = JSON.parse(s);
+      state = Object.assign(state, parsed);
+    }
+  } catch(e) {}
+}
+
+/* ---------- NAV ---------- */
+function bindNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const scr = document.getElementById(btn.dataset.screen + '-screen');
+      if (scr) scr.classList.add('active');
+      if (btn.dataset.screen === 'scoreboard') renderScoreboard();
+      if (btn.dataset.screen === 'participants') renderParticipants();
+      if (btn.dataset.screen === 'jury') renderJuryPanel();
+      if (btn.dataset.screen === 'public') renderPublicPanel();
+      if (btn.dataset.screen === 'final') renderFinal();
+      if (btn.dataset.screen === 'settings') loadSettingsUI();
+    });
+  });
+}
+
+function updateNavStatus() {
+  const jDone = Object.keys(state.juryPresented).length;
+  const jTotal = state.participants.length;
+  let txt = `Jury: ${jDone}/${jTotal}`;
+  if (state.publicPresented) txt += ' | Public: Done';
+  else txt += ' | Public: Pending';
+  document.getElementById('navStatus').textContent = txt;
+  document.getElementById('sbProgress').textContent = txt;
+}
+
+/* ---------- SCORES ---------- */
+function calcScores() {
+  const scores = {};
+  state.participants.forEach(c => {
+    scores[c] = { jury: 0, public: 0, total: 0 };
+  });
+  Object.keys(state.juryVotes).forEach(voter => {
+    if (!state.juryPresented[voter]) return;
+    const votes = state.juryVotes[voter];
+    Object.keys(votes).forEach(rec => {
+      if (scores[rec]) scores[rec].jury += votes[rec];
+    });
+  });
+  if (state.publicPresented) {
+    Object.keys(state.publicVotes).forEach(c => {
+      if (scores[c]) scores[c].public = state.publicVotes[c] || 0;
+    });
+  }
+  Object.keys(scores).forEach(c => {
+    scores[c].total = scores[c].jury + scores[c].public;
+  });
+  return scores;
+}
+
+function rankedList() {
+  const scores = calcScores();
+  return state.participants
+    .map(c => ({ code: c, ...scores[c], name: countryMap[c]?.name || c }))
+    .sort((a, b) => b.total - a.total || b.jury - a.jury || a.name.localeCompare(b.name));
+}
+
+/* ---------- SCOREBOARD RENDER ---------- */
+function renderScoreboard() {
+  const tbody = document.getElementById('sbBody');
+  const ranked = rankedList();
+  const hasAny = ranked.some(r => r.total > 0);
+  tbody.innerHTML = '';
+  ranked.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0 && r.total > 0) tr.classList.add('leader');
+    tr.classList.add(r.total > 0 || !hasAny ? 'has-points' : 'no-points');
+    tr.dataset.code = r.code;
+    tr.innerHTML = `
+      <td class="rank-cell">${i + 1}</td>
+      <td class="flag-cell"><img src="${flagUrl(r.code)}" alt="${r.name}" onerror="this.style.display='none'"></td>
+      <td class="country-cell">${r.name}</td>
+      <td class="points-cell">${r.jury || ''}</td>
+      <td class="points-cell">${r.public || ''}</td>
+      <td class="total-cell">${r.total}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('compTitle').textContent = state.title;
+  document.getElementById('compSubtitle').textContent = state.subtitle;
+  updateNavStatus();
+}
+
+function animateScoreUpdate() {
+  renderScoreboard();
+}
+
+/* ---------- PARTICIPANTS ---------- */
+function renderParticipants() {
+  const avail = document.getElementById('availableList');
+  const part = document.getElementById('participantList');
+  const q = (document.getElementById('countrySearch').value || '').toLowerCase();
+  avail.innerHTML = '';
+  ALL_COUNTRIES.forEach(c => {
+    if (state.participants.includes(c.code)) return;
+    if (q && !c.name.toLowerCase().includes(q) && !c.code.includes(q)) return;
+    const div = document.createElement('div');
+    div.className = 'country-item';
+    div.innerHTML = `<input type="checkbox" data-code="${c.code}"><img src="${flagUrl(c.code)}" onerror="this.style.display='none'"><span>${c.name}</span>`;
+    avail.appendChild(div);
+  });
+  part.innerHTML = '';
+  state.participants.forEach(code => {
+    const c = countryMap[code];
+    if (!c) return;
+    const div = document.createElement('div');
+    div.className = 'country-item';
+    div.innerHTML = `<input type="checkbox" data-code="${code}"><img src="${flagUrl(code)}" onerror="this.style.display='none'"><span>${c.name}</span>`;
+    part.appendChild(div);
+  });
+  document.getElementById('partCount').textContent = state.participants.length;
+}
+
+document.getElementById('countrySearch').addEventListener('input', renderParticipants);
+
+document.getElementById('btnAddSelected').addEventListener('click', () => {
+  document.querySelectorAll('#availableList input:checked').forEach(cb => {
+    if (!state.participants.includes(cb.dataset.code)) {
+      state.participants.push(cb.dataset.code);
+      state.votingOrder.push(cb.dataset.code);
+    }
+  });
+  saveState();
+  renderParticipants();
+  renderScoreboard();
+  renderJuryPanel();
+  renderPublicPanel();
+});
+
+document.getElementById('btnAddDefaults').addEventListener('click', () => {
+  state.participants = DEFAULT_PARTICIPANTS.filter(c => countryMap[c]);
+  state.votingOrder = [...state.participants];
+  state.juryVotes = {};
+  state.juryPresented = {};
+  state.publicVotes = {};
+  state.publicPresented = false;
+  saveState();
+  renderParticipants();
+  renderScoreboard();
+  renderJuryPanel();
+  renderPublicPanel();
+});
+
+document.getElementById('btnRemoveSelected').addEventListener('click', () => {
+  const remove = [];
+  document.querySelectorAll('#participantList input:checked').forEach(cb => remove.push(cb.dataset.code));
+  state.participants = state.participants.filter(c => !remove.includes(c));
+  state.votingOrder = state.votingOrder.filter(c => !remove.includes(c));
+  remove.forEach(c => {
+    delete state.juryVotes[c];
+    delete state.juryPresented[c];
+    delete state.publicVotes[c];
+  });
+  saveState();
+  renderParticipants();
+  renderScoreboard();
+  renderJuryPanel();
+  renderPublicPanel();
+});
+
+document.getElementById('btnMoveUp').addEventListener('click', () => {
+  const checked = [...document.querySelectorAll('#participantList input:checked')].map(c => c.dataset.code);
+  if (checked.length !== 1) return;
+  const idx = state.participants.indexOf(checked[0]);
+  if (idx > 0) {
+    [state.participants[idx-1], state.participants[idx]] = [state.participants[idx], state.participants[idx-1]];
+    state.votingOrder = [...state.participants];
+    saveState();
+    renderParticipants();
+    renderScoreboard();
+  }
+});
+
+document.getElementById('btnMoveDown').addEventListener('click', () => {
+  const checked = [...document.querySelectorAll('#participantList input:checked')].map(c => c.dataset.code);
+  if (checked.length !== 1) return;
+  const idx = state.participants.indexOf(checked[0]);
+  if (idx < state.participants.length - 1) {
+    [state.participants[idx], state.participants[idx+1]] = [state.participants[idx+1], state.participants[idx]];
+    state.votingOrder = [...state.participants];
+    saveState();
+    renderParticipants();
+    renderScoreboard();
+  }
+});
+
+document.getElementById('btnClearParts').addEventListener('click', () => {
+  confirmModal('Clear all participants?', () => {
+    state.participants = [];
+    state.votingOrder = [];
+    state.juryVotes = {};
+    state.juryPresented = {};
+    state.publicVotes = {};
+    state.publicPresented = false;
+    saveState();
+    renderParticipants();
+    renderScoreboard();
+    renderJuryPanel();
+    renderPublicPanel();
+  });
+});
+
+/* ---------- JURY PANEL ---------- */
+function renderJuryPanel() {
+  const sel = document.getElementById('juryVoterSelect');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  state.participants.forEach(code => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    const presented = state.juryPresented[code] ? ' [Presented]' : (state.juryVotes[code] ? ' [Saved]' : '');
+    opt.textContent = (countryMap[code]?.name || code) + presented;
+    sel.appendChild(opt);
+  });
+  if (prev && state.participants.includes(prev)) sel.value = prev;
+  buildJuryAssign();
+  updateJuryStatus();
+}
+
+function buildJuryAssign() {
+  const container = document.getElementById('juryPointsAssign');
+  const voter = document.getElementById('juryVoterSelect').value;
+  const existing = state.juryVotes[voter] || {};
+  const used = new Set(Object.keys(existing));
+  container.innerHTML = '';
+  POINTS.forEach(pts => {
+    const row = document.createElement('div');
+    row.className = 'pt-row';
+    const current = Object.entries(existing).find(([,v]) => v === pts);
+    const curCode = current ? current[0] : '';
+    let opts = `<option value="">—</option>`;
+    state.participants.forEach(code => {
+      if (code === voter) return;
+      const sel = code === curCode ? 'selected' : '';
+      const disabled = used.has(code) && code !== curCode ? 'disabled' : '';
+      opts += `<option value="${code}" ${sel} ${disabled}>${countryMap[code]?.name || code}</option>`;
+    });
+    row.innerHTML = `<span class="pt-val">${pts}</span><select class="select jury-pt-sel" data-pts="${pts}">${opts}</select>`;
+    container.appendChild(row);
+  });
+  container.querySelectorAll('.jury-pt-sel').forEach(s => {
+    s.addEventListener('change', () => {
+      // rebuild to update disabled states
+      const votes = {};
+      container.querySelectorAll('.jury-pt-sel').forEach(sel => {
+        if (sel.value) votes[sel.value] = parseInt(sel.dataset.pts);
+      });
+      // temporary store for UI
+      state._tempJury = votes;
+      // re-enable all then disable used
+      const usedNow = new Set(Object.keys(votes));
+      container.querySelectorAll('.jury-pt-sel').forEach(sel => {
+        const myVal = sel.value;
+        [...sel.options].forEach(o => {
+          if (!o.value) return;
+          o.disabled = usedNow.has(o.value) && o.value !== myVal;
+        });
+      });
+    });
+  });
+}
+
+document.getElementById('juryVoterSelect').addEventListener('change', () => {
+  state._tempJury = null;
+  buildJuryAssign();
+  updateJuryStatus();
+});
+
+function getJuryAllocations() {
+  const container = document.getElementById('juryPointsAssign');
+  const votes = {};
+  container.querySelectorAll('.jury-pt-sel').forEach(sel => {
+    if (sel.value) votes[sel.value] = parseInt(sel.dataset.pts);
+  });
+  return votes;
+}
+
+function validateJury(votes, voter) {
+  const vals = Object.values(votes);
+  if (vals.length !== 10) return 'All 10 point values (1-8, 10, 12) must be assigned.';
+  const set = new Set(vals);
+  if (set.size !== 10) return 'Duplicate point values.';
+  for (const p of POINTS) if (!set.has(p)) return 'Missing point value: ' + p;
+  if (Object.keys(votes).includes(voter)) return 'Cannot vote for self.';
+  if (new Set(Object.keys(votes)).size !== 10) return 'Duplicate recipients.';
+  return null;
+}
+
+function updateJuryStatus() {
+  const voter = document.getElementById('juryVoterSelect').value;
+  const el = document.getElementById('juryStatus');
+  if (!voter) { el.textContent = ''; return; }
+  if (state.juryPresented[voter]) el.textContent = 'This vote has been presented.';
+  else if (state.juryVotes[voter]) el.textContent = 'Vote saved. Ready to present.';
+  else el.textContent = 'No vote entered yet.';
+}
+
+document.getElementById('btnSaveJury').addEventListener('click', () => {
+  const voter = document.getElementById('juryVoterSelect').value;
+  if (!voter) return;
+  const votes = getJuryAllocations();
+  const err = validateJury(votes, voter);
+  if (err) { alert(err); return; }
+  // If already presented, un-present so totals recalculate cleanly
+  if (state.juryPresented[voter]) {
+    delete state.juryPresented[voter];
+  }
+  state.juryVotes[voter] = votes;
+  saveState();
+  updateJuryStatus();
+  renderJuryPanel();
+  alert('Vote saved.');
+});
+
+document.getElementById('btnClearJury').addEventListener('click', () => {
+  const voter = document.getElementById('juryVoterSelect').value;
+  if (!voter) return;
+  delete state.juryVotes[voter];
+  delete state.juryPresented[voter];
+  saveState();
+  buildJuryAssign();
+  updateJuryStatus();
+  renderScoreboard();
+});
+
+document.getElementById('btnAutoJury').addEventListener('click', () => {
+  const voter = document.getElementById('juryVoterSelect').value;
+  if (!voter) return;
+  const eligible = state.participants.filter(c => c !== voter);
+  // shuffle
+  for (let i = eligible.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+  }
+  const votes = {};
+  POINTS.forEach((p, i) => { if (eligible[i]) votes[eligible[i]] = p; });
+  state.juryVotes[voter] = votes;
+  if (state.juryPresented[voter]) delete state.juryPresented[voter];
+  saveState();
+  buildJuryAssign();
+  updateJuryStatus();
+});
+
+document.getElementById('btnPresentJury').addEventListener('click', () => {
+  const voter = document.getElementById('juryVoterSelect').value;
+  if (!voter) return;
+  let votes = state.juryVotes[voter];
+  if (!votes) {
+    votes = getJuryAllocations();
+    const err = validateJury(votes, voter);
+    if (err) { alert(err); return; }
+    state.juryVotes[voter] = votes;
+  }
+  const err = validateJury(votes, voter);
+  if (err) { alert(err); return; }
+  presentJuryVote(voter);
+});
+
+document.getElementById('btnPlayAllJury').addEventListener('click', () => {
+  const remaining = state.votingOrder.filter(c => !state.juryPresented[c] && state.juryVotes[c]);
+  if (remaining.length === 0) {
+    // try to auto-generate missing
+    const missing = state.votingOrder.filter(c => !state.juryVotes[c]);
+    if (missing.length > 0) {
+      if (!confirm('Some countries have no votes. Auto-generate them and play all?')) return;
+      missing.forEach(voter => {
+        const eligible = state.participants.filter(c => c !== voter);
+        for (let i = eligible.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+        }
+        const votes = {};
+        POINTS.forEach((p, i) => { if (eligible[i]) votes[eligible[i]] = p; });
+        state.juryVotes[voter] = votes;
+      });
+      saveState();
+    }
+  }
+  const toPlay = state.votingOrder.filter(c => !state.juryPresented[c] && state.juryVotes[c]);
+  if (toPlay.length === 0) { alert('No votes to present.'); return; }
+  playJurySequence(toPlay);
+});
+
+/* ---------- JURY PRESENTATION ---------- */
+function presentJuryVote(voter) {
+  const votes = state.juryVotes[voter];
+  if (!votes) return;
+  // Mark presented BEFORE animation so totals are correct; animation is visual only
+  state.juryPresented[voter] = true;
+  saveState();
+
+  const overlay = document.getElementById('vote-overlay');
+  document.getElementById('voteLabel').textContent = 'JURY VOTING';
+  document.getElementById('voteFlag').src = flagUrl(voter);
+  document.getElementById('voteCountryName').textContent = countryMap[voter]?.name || voter;
+  const list = document.getElementById('votePointsList');
+  list.innerHTML = '';
+
+  // Sort by points descending for reveal
+  const entries = Object.entries(votes).sort((a,b) => b[1] - a[1]);
+  entries.forEach(([code, pts]) => {
+    const div = document.createElement('div');
+    div.className = 'vote-point-item' + (pts === 12 ? ' twelve' : '');
+    div.innerHTML = `<div class="vp-pts">${pts}</div><div class="vp-name"><img class="vp-flag" src="${flagUrl(code)}" onerror="this.style.display='none'">${countryMap[code]?.name || code}</div>`;
+    list.appendChild(div);
+  });
+
+  overlay.classList.add('show');
+  votePlaying = true;
+  votePaused = false;
+
+  // Reveal one by one
+  const items = list.querySelectorAll('.vote-point-item');
+  let i = 0;
+  const speed = 600 / state.animSpeed;
+
+  function revealNext() {
+    if (votePaused) {
+      setTimeout(revealNext, 200);
+      return;
+    }
+    if (i >= items.length) {
+      setTimeout(() => {
+        animateScoreUpdate();
+        updateNavStatus();
+      }, 400);
+      return;
+    }
+    items[i].classList.add('reveal');
+    i++;
+    setTimeout(revealNext, speed);
+  }
+  setTimeout(revealNext, 500);
+}
+
+function playJurySequence(voters) {
+  voteQueue = voters;
+  voteQueueIdx = 0;
+  function next() {
+    if (voteQueueIdx >= voteQueue.length) {
+      document.getElementById('vote-overlay').classList.remove('show');
+      votePlaying = false;
+      renderScoreboard();
+      return;
+    }
+    const v = voteQueue[voteQueueIdx++];
+    presentJuryVote(v);
+    // Wait for reveals + pause then next
+    const delay = (POINTS.length * 600 / state.animSpeed) + 2000;
+    setTimeout(() => {
+      if (!votePaused) next();
+      else {
+        const check = setInterval(() => {
+          if (!votePaused) { clearInterval(check); next(); }
+        }, 300);
+      }
+    }, delay);
+  }
+  next();
+}
+
+document.getElementById('btnVoteClose').addEventListener('click', () => {
+  document.getElementById('vote-overlay').classList.remove('show');
+  votePlaying = false;
+  votePaused = false;
+  renderScoreboard();
+});
+document.getElementById('btnVotePause').addEventListener('click', () => {
+  votePaused = !votePaused;
+  document.getElementById('btnVotePause').textContent = votePaused ? 'Resume' : 'Pause';
+});
+document.getElementById('btnVoteReplay').addEventListener('click', () => {
+  const voter = document.getElementById('juryVoterSelect').value;
+  if (voter && state.juryVotes[voter]) presentJuryVote(voter);
+});
+document.getElementById('btnVoteNext').addEventListener('click', () => {
+  // find next unpresented with vote
+  const remaining = state.votingOrder.filter(c => !state.juryPresented[c] && state.juryVotes[c]);
+  if (remaining.length) presentJuryVote(remaining[0]);
+});
+document.getElementById('btnVotePrev').addEventListener('click', () => {
+  const presented = state.votingOrder.filter(c => state.juryPresented[c]);
+  if (presented.length) presentJuryVote(presented[presented.length - 1]);
+});
+
+/* ---------- PUBLIC ---------- */
+function renderPublicPanel() {
+  const tbody = document.getElementById('publicBody');
+  tbody.innerHTML = '';
+  state.participants.forEach(code => {
+    const tr = document.createElement('tr');
+    const val = state.publicVotes[code] ?? '';
+    tr.innerHTML = `
+      <td>${countryMap[code]?.name || code}</td>
+      <td><img src="${flagUrl(code)}" style="width:28px;height:18px;object-fit:cover;border-radius:2px" onerror="this.style.display='none'"></td>
+      <td><input type="number" min="0" step="1" data-code="${code}" value="${val}" class="pub-input"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('btnSavePublic').addEventListener('click', () => {
+  document.querySelectorAll('.pub-input').forEach(inp => {
+    const v = parseInt(inp.value);
+    state.publicVotes[inp.dataset.code] = isNaN(v) ? 0 : v;
+  });
+  state.publicPresented = false;
+  saveState();
+  alert('Public votes saved.');
+});
+
+document.getElementById('btnClearPublic').addEventListener('click', () => {
+  state.publicVotes = {};
+  state.publicPresented = false;
+  saveState();
+  renderPublicPanel();
+  renderScoreboard();
+});
+
+document.getElementById('btnAutoPublic').addEventListener('click', () => {
+  // Distribute a pool roughly like Eurovision televote scale
+  const pool = state.participants.length * 40;
+  const weights = state.participants.map(() => Math.random() + 0.1);
+  const sum = weights.reduce((a,b) => a+b, 0);
+  state.participants.forEach((c, i) => {
+    state.publicVotes[c] = Math.round((weights[i] / sum) * pool);
+  });
+  state.publicPresented = false;
+  saveState();
+  renderPublicPanel();
+});
+
+document.getElementById('btnPresentPublic').addEventListener('click', () => {
+  // Collect current inputs
+  document.querySelectorAll('.pub-input').forEach(inp => {
+    const v = parseInt(inp.value);
+    state.publicVotes[inp.dataset.code] = isNaN(v) ? 0 : v;
+  });
+  state.publicPresented = true;
+  saveState();
+  presentPublicResults();
+});
+
+function presentPublicResults() {
+  const overlay = document.getElementById('vote-overlay');
+  document.getElementById('voteLabel').textContent = 'PUBLIC VOTE';
+  document.getElementById('voteFlag').src = '';
+  document.getElementById('voteFlag').style.display = 'none';
+  document.getElementById('voteCountryName').textContent = 'Televoting Results';
+  const list = document.getElementById('votePointsList');
+  list.innerHTML = '';
+
+  // Sort by public points ascending for dramatic reveal (lowest first)
+  const entries = state.participants
+    .map(c => ({ code: c, pts: state.publicVotes[c] || 0, name: countryMap[c]?.name || c }))
+    .sort((a,b) => a.pts - b.pts);
+
+  entries.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'vote-point-item';
+    div.innerHTML = `<div class="vp-pts">${e.pts}</div><div class="vp-name"><img class="vp-flag" src="${flagUrl(e.code)}" onerror="this.style.display='none'">${e.name}</div>`;
+    list.appendChild(div);
+  });
+
+  overlay.classList.add('show');
+  document.getElementById('voteFlag').style.display = '';
+  votePlaying = true;
+  votePaused = false;
+
+  const items = list.querySelectorAll('.vote-point-item');
+  let i = 0;
+  const speed = 500 / state.animSpeed;
+
+  function revealNext() {
+    if (votePaused) { setTimeout(revealNext, 200); return; }
+    if (i >= items.length) {
+      setTimeout(() => {
+        animateScoreUpdate();
+        updateNavStatus();
+      }, 400);
+      return;
+    }
+    items[i].classList.add('reveal');
+    if (i === items.length - 1) items[i].classList.add('twelve');
+    i++;
+    setTimeout(revealNext, speed);
+  }
+  setTimeout(revealNext, 600);
+}
+
+/* ---------- WINNER ---------- */
+function showWinner() {
+  const ranked = rankedList();
+  if (!ranked.length || ranked[0].total === 0) {
+    alert('No results yet.');
+    return;
+  }
+  const w = ranked[0];
+  const overlay = document.getElementById('winner-overlay');
+  const flag = document.getElementById('winnerFlag');
+  const label = document.getElementById('winnerLabel');
+  const name = document.getElementById('winnerName');
+  const pts = document.getElementById('winnerPts');
+  flag.classList.remove('show');
+  label.classList.remove('show');
+  name.classList.remove('show');
+  pts.classList.remove('show');
+  flag.src = flagUrl(w.code);
+  name.textContent = w.name;
+  pts.textContent = w.total + ' POINTS';
+  overlay.classList.add('show');
+  setTimeout(() => flag.classList.add('show'), 100);
+  setTimeout(() => label.classList.add('show'), 400);
+  setTimeout(() => name.classList.add('show'), 600);
+  setTimeout(() => pts.classList.add('show'), 900);
+}
+
+document.getElementById('btnWinnerClose').addEventListener('click', () => {
+  document.getElementById('winner-overlay').classList.remove('show');
+});
+document.getElementById('btnRevealWinner').addEventListener('click', showWinner);
+document.getElementById('btnWinnerAnim').addEventListener('click', showWinner);
+
+/* ---------- FINAL ---------- */
+function renderFinal() {
+  const tbody = document.getElementById('finalBody');
+  const ranked = rankedList();
+  tbody.innerHTML = '';
+  ranked.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0 && r.total > 0) tr.classList.add('leader');
+    tr.innerHTML = `
+      <td class="rank-cell">${i + 1}</td>
+      <td class="flag-cell"><img src="${flagUrl(r.code)}" onerror="this.style.display='none'"></td>
+      <td class="country-cell">${r.name}</td>
+      <td class="points-cell">${r.jury}</td>
+      <td class="points-cell">${r.public}</td>
+      <td class="total-cell">${r.total}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- EXPORT / IMPORT ---------- */
+document.getElementById('btnExportCSV').addEventListener('click', () => {
+  const ranked = rankedList();
+  let csv = 'Rank,Country,Code,Jury,Public,Total\n';
+  ranked.forEach((r, i) => {
+    csv += `${i+1},"${r.name}",${r.code},${r.jury},${r.public},${r.total}\n`;
+  });
+  downloadBlob(csv, 'eurovision-results.csv', 'text/csv');
+});
+
+document.getElementById('btnExportJSON').addEventListener('click', () => {
+  const data = JSON.stringify(state, null, 2);
+  downloadBlob(data, 'eurovision-competition.json', 'application/json');
+});
+
+document.getElementById('btnImportJSON').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      state = Object.assign(state, data);
+      saveState();
+      renderScoreboard();
+      renderParticipants();
+      renderJuryPanel();
+      renderPublicPanel();
+      applyTheme(state.theme);
+      alert('Competition imported.');
+    } catch(err) {
+      alert('Invalid JSON file.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/* ---------- RECORDING ---------- */
+document.getElementById('btnRecStart').addEventListener('click', startRecording);
+document.getElementById('btnRecStop').addEventListener('click', stopRecording);
+
+async function startRecording() {
+  if (isRecording) return;
+  try {
+    // Capture the main viewport
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 30 },
+      audio: false
+    });
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
+      : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '';
+    if (!mime) {
+      alert('Recording not supported in this browser.');
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (recordedChunks.length === 0) {
+        alert('Recording failed or was empty.');
+        return;
+      }
+      const blob = new Blob(recordedChunks, { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'eurovision-show-' + Date.now() + '.webm';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    };
+    mediaRecorder.start(1000);
+    isRecording = true;
+    document.getElementById('btnRecStart').disabled = true;
+    document.getElementById('btnRecStop').disabled = false;
+    document.getElementById('recDot').classList.add('on');
+    recStartTime = Date.now();
+    recTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - recStartTime) / 1000);
+      const m = Math.floor(s / 60);
+      document.getElementById('recTime').textContent = `${m}:${String(s%60).padStart(2,'0')}`;
+    }, 500);
+  } catch (err) {
+    alert('Could not start recording: ' + (err.message || 'Permission denied or unsupported.'));
+  }
+}
+
+function stopRecording() {
+  if (!isRecording || !mediaRecorder) return;
+  mediaRecorder.stop();
+  isRecording = false;
+  document.getElementById('btnRecStart').disabled = false;
+  document.getElementById('btnRecStop').disabled = true;
+  document.getElementById('recDot').classList.remove('on');
+  clearInterval(recTimer);
+  document.getElementById('recTime').textContent = '';
+}
+
+/* ---------- SETTINGS ---------- */
+function loadSettingsUI() {
+  document.getElementById('setTitle').value = state.title;
+  document.getElementById('setSubtitle').value = state.subtitle;
+  document.getElementById('setAnimSpeed').value = state.animSpeed;
+  document.getElementById('setFlagSize').value = state.flagSize;
+  document.getElementById('setReducedMotion').checked = state.reducedMotion;
+  document.querySelectorAll('.theme-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.theme === state.theme);
+  });
+}
+
+function applySettings() {
+  document.documentElement.style.setProperty('--flag-size', state.flagSize + 'px');
+  document.documentElement.style.setProperty('--anim-speed', state.animSpeed);
+  document.body.classList.toggle('reduced-motion', state.reducedMotion);
+  document.getElementById('compTitle').textContent = state.title;
+  document.getElementById('compSubtitle').textContent = state.subtitle;
+}
+
+function applyTheme(theme) {
+  document.body.className = document.body.className.replace(/theme-\w+/g, '');
+  document.body.classList.add('theme-' + theme);
+  if (state.reducedMotion) document.body.classList.add('reduced-motion');
+  state.theme = theme;
+}
+
+document.getElementById('themeSwatches').addEventListener('click', e => {
+  const sw = e.target.closest('.theme-swatch');
+  if (!sw) return;
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  sw.classList.add('active');
+  applyTheme(sw.dataset.theme);
+  saveState();
+});
+
+document.getElementById('setTitle').addEventListener('change', e => {
+  state.title = e.target.value;
+  applySettings();
+  saveState();
+});
+document.getElementById('setSubtitle').addEventListener('change', e => {
+  state.subtitle = e.target.value;
+  applySettings();
+  saveState();
+});
+document.getElementById('setAnimSpeed').addEventListener('change', e => {
+  state.animSpeed = parseFloat(e.target.value);
+  saveState();
+});
+document.getElementById('setFlagSize').addEventListener('change', e => {
+  state.flagSize = parseInt(e.target.value);
+  applySettings();
+  renderScoreboard();
+  saveState();
+});
+document.getElementById('setReducedMotion').addEventListener('change', e => {
+  state.reducedMotion = e.target.checked;
+  applySettings();
+  saveState();
+});
+
+document.getElementById('btnSaveComp').addEventListener('click', () => {
+  saveState();
+  alert('Competition saved to browser storage.');
+});
+document.getElementById('btnNewComp').addEventListener('click', () => {
+  confirmModal('Create new competition? Current data will be overwritten.', () => {
+    state.participants = DEFAULT_PARTICIPANTS.filter(c => countryMap[c]);
+    state.votingOrder = [...state.participants];
+    state.juryVotes = {};
+    state.juryPresented = {};
+    state.publicVotes = {};
+    state.publicPresented = false;
+    state.title = 'EUROVISION SIMULATOR';
+    state.subtitle = 'Grand Final';
+    saveState();
+    renderScoreboard();
+    renderParticipants();
+    renderJuryPanel();
+    renderPublicPanel();
+  });
+});
+document.getElementById('btnResetComp').addEventListener('click', () => {
+  confirmModal('Reset ALL data including participants and votes?', () => {
+    localStorage.removeItem('yse_state');
+    location.reload();
+  });
+});
+
+/* ---------- CONTROLS BAR ---------- */
+function bindControls() {
+  document.getElementById('btnStartJury').addEventListener('click', () => {
+    document.querySelector('.nav-btn[data-screen="jury"]').click();
+  });
+  document.getElementById('btnStartPublic').addEventListener('click', () => {
+    document.querySelector('.nav-btn[data-screen="public"]').click();
+  });
+}
+
+/* ---------- MODAL ---------- */
+let modalCallback = null;
+function confirmModal(msg, cb) {
+  document.getElementById('modalTitle').textContent = 'Confirm';
+  document.getElementById('modalMsg').textContent = msg;
+  document.getElementById('modalBg').classList.add('show');
+  modalCallback = cb;
+}
+document.getElementById('modalCancel').addEventListener('click', () => {
+  document.getElementById('modalBg').classList.remove('show');
+  modalCallback = null;
+});
+document.getElementById('modalOk').addEventListener('click', () => {
+  document.getElementById('modalBg').classList.remove('show');
+  if (modalCallback) modalCallback();
+  modalCallback = null;
+});
+
+/* ---------- BOOT ---------- */
+init();
+</script>
+</body>
+</html>
+```
